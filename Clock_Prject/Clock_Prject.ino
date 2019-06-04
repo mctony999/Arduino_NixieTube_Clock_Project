@@ -27,7 +27,7 @@ const int buttonPin = 4; //the number of the pushbutton pin
 boolean TempChangeShow = false;
 
 int buttonState; //previous stable state of the input pin
-int lastButtonState = LOW; //the previous reading from the input pin
+int lastButtonState = HIGH; //the previous reading from the input pin
 long lastDebounceTime = 0; //the last time the output pin was toggled
 long debounceDelay = 50; //the debounce time; increase if the output flickers
 
@@ -63,7 +63,10 @@ void loop() {
   
   Serial.print("start");
   Serial.print('\n');
-  
+  Serial.print(reading);
+  Serial.print('\n');
+  Serial.print('\n');
+  //delay(500);
   if (reading != lastButtonState){ //button state changed
     lastDebounceTime = millis(); //update last debounce time
   }
@@ -76,10 +79,20 @@ void loop() {
     buttonState = reading; //update previous stable button state
     if (buttonState == LOW){ // button presses
       TempChangeShow =!TempChangeShow; //reverse the boolean
-      Serial.print('-');
     }
     }
   }
+  lastButtonState = reading; //update last button state
+
+  if (TempChangeShow == true){
+    Serial.print("TempChangeShow == true");
+    Serial.print('\n');
+  }
+  else if (TempChangeShow == false){
+    Serial.print("TempChangeShow == false");
+    Serial.print('\n');
+  }
+  
   
   if (TempChangeShow == true) {
     if( currentMillis - previousMills >= interval ){
@@ -90,18 +103,18 @@ void loop() {
       ss = now.second();
 
       uint8_t segto;    //Display colon
-      int value = 1000;
+      int value = 1244;
       //hour:minute
-      int t = hh.toInt()*100 + mm.toInt();
+      //int t = hh.toInt()*100 + mm.toInt();
       //minute:seconds
-      //int t = mm.toInt()*100 +ss.toInt();
+      int t = mm.toInt()*100 +ss.toInt();
     
      /** Display center colon */
      segto = 0x80 | display.encodeDigit((t/100)%10);
      display.setSegments(&segto, 1, 1);  
-     delay(500);
+     //delay(500);
      display.showNumberDec(t, true);
-     delay(500);
+     //delay(500);
   }
   }
   else {
@@ -178,6 +191,6 @@ void loop() {
     /**Show Temperature*/
     uint8_t data[] = {TEMP_1,TEMP_2,0b01100011,0b00111001};
     display.setSegments(data);
-    delay(1000);
+    //delay(1000);
   }
 }
