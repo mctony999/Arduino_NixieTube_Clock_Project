@@ -1,0 +1,10 @@
+1.打開 Arduino IDE (建議使用 v1.8.3) 並 ( "File/New" )  開啟一個新的草稿檔
+2.Arduino 開發板通電後，設定好 "Tools" 選單下面的 "Board"、"Processor" 和 "Port" 各選項，編譯並上傳程式 *
+3.RTC 模組通電，這時 OSF 會被設定為 1
+4.打開上面剛剛修改過的 ds3231_timesync 程式，編譯之後上傳
+5.打開 Serial Monitor ( 設定為 9600 bps ) 對照輸出的時間和系統時間之間的差距 **
+6.RTC 模組時間差異可接受，直接裝上鈕扣電池，完成 RTC 模組時間設定；否則，下一步驟
+7.將步驟 5 的時間差，回填修改到 setup() 函式裡 TimeSpan 的引數
+8.將 RTC 模組斷電，跳至步驟 1
+
+Reference:http://ruten-proteus.blogspot.com/2017/08/ds3231-rtc-iiclcd-clock.html
