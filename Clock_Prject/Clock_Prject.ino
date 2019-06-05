@@ -7,13 +7,14 @@ RTC_DS3231 rtc;
 DS3231 Clock;
 
 /** TIME UPDATE*/
-unsigned long previousMills = 0;
-const long interval = 1000;
+//unsigned long previousMills = 0;
+const long interval = 500;
 
 /**TM1637Display*/
 #define CLK 2
 #define DIO 3
 
+int colon_value = 1244; //For colon value 
 TM1637Display display(CLK, DIO);
 boolean colon = true;
 
@@ -30,6 +31,10 @@ int buttonState; //previous stable state of the input pin
 int lastButtonState = HIGH; //the previous reading from the input pin
 long lastDebounceTime = 0; //the last time the output pin was toggled
 long debounceDelay = 50; //the debounce time; increase if the output flickers
+
+/*function*/
+void Button_Push_Check (int&, int&, int&, long&, long&, boolean&);
+
 
 void setup() {
   Serial.begin(9600);
@@ -59,20 +64,15 @@ void loop() {
     
   // time update very second
   unsigned long currentMillis = millis();
+
   int reading = digitalRead(buttonPin);
+  Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
   
-  Serial.print("start");
-  Serial.print('\n');
-  Serial.print(reading);
-  Serial.print('\n');
-  Serial.print('\n');
-  //delay(500);
+  /*old button function
   if (reading != lastButtonState){ //button state changed
     lastDebounceTime = millis(); //update last debounce time
   }
 
-  Serial.print("Second");
-  Serial.print('\n');
   
   if ((millis() - lastDebounceTime) > debounceDelay){ //overtime
     if (reading != buttonState) {//button state has changed
@@ -83,43 +83,40 @@ void loop() {
     }
   }
   lastButtonState = reading; //update last button state
+  */
 
-  if (TempChangeShow == true){
-    Serial.print("TempChangeShow == true");
-    Serial.print('\n');
-  }
-  else if (TempChangeShow == false){
-    Serial.print("TempChangeShow == false");
-    Serial.print('\n');
-  }
-  
-  
-  if (TempChangeShow == true) {
-    if( currentMillis - previousMills >= interval ){
-      previousMills = currentMillis;
+
+  //decide show Temperature or Time
+  if (TempChangeShow == false) {
+      unsigned long previousMills = millis();
+      //previousMills = currentMillis;
       DateTime now = rtc.now();
       hh = now.hour();
       mm = now.minute();
       ss = now.second();
-
-      uint8_t segto;    //Display colon
-      int value = 1244;
+      
       //hour:minute
-      //int t = hh.toInt()*100 + mm.toInt();
+      int t = hh.toInt()*100 + mm.toInt();
       //minute:seconds
-      int t = mm.toInt()*100 +ss.toInt();
+      //int t = mm.toInt()*100 +ss.toInt();
+      display.showNumberDec(t, true);
+      while ((millis()-previousMills>0) && (millis()-previousMills<500)){
+        int reading = digitalRead(buttonPin);
+        Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
+        };
     
-     /** Display center colon */
-     segto = 0x80 | display.encodeDigit((t/100)%10);
-     display.setSegments(&segto, 1, 1);  
-     //delay(500);
-     display.showNumberDec(t, true);
-     //delay(500);
-  }
+    unsigned long colon_t = millis();
+    uint8_t segto;    //Display colon
+    segto = 0x80 | display.encodeDigit((t/100)%10);
+    display.setSegments(&segto, 1, 1);  /** Display center colon*/ 
+    while ((millis()-colon_t>0) && (millis()-colon_t<500)){
+      int reading = digitalRead(buttonPin);
+      Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
+      };
   }
   else {
     int TEMP = Clock.getTemperature(); //get temperature
-   Serial.print(TEMP);
+    Serial.print(TEMP);
     Serial.print('\n');
     
     /**mapping Temperature number to 7-segment*/
@@ -191,6 +188,23 @@ void loop() {
     /**Show Temperature*/
     uint8_t data[] = {TEMP_1,TEMP_2,0b01100011,0b00111001};
     display.setSegments(data);
-    //delay(1000);
   }
 }
+
+
+void Button_Push_Check (int& reading, int&buttonState, int& lastButtonState,long& lastDebounceTime,long& debounceDelay ,boolean& TempChangeShow){
+  if (reading != lastButtonState){ //button state changed
+    lastDebounceTime = millis(); //update last debounce time
+  }
+  if ((millis() - lastDebounceTime) > debounceDelay){ //overtime
+    if (reading != buttonState) {//button state has changed
+    buttonState = reading; //update previous stable button state
+    if (buttonState == LOW){ // button presses
+      TempChangeShow =!TempChangeShow; //reverse the boolean
+    }
+    }
+  }
+  lastButtonState = reading; //update last button state
+}
+
+
