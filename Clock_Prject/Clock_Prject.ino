@@ -33,7 +33,7 @@ long lastDebounceTime = 0; //the last time the output pin was toggled
 long debounceDelay = 50; //the debounce time; increase if the output flickers
 
 /*function*/
-void Button_Push_Check (int&, int&, int&, long&, long&, boolean&);
+boolean Button_Push_Check (int&, int&, int&, long&, long&, boolean&);
 
 
 void setup() {
@@ -64,9 +64,13 @@ void loop() {
     
   // time update very second
   unsigned long currentMillis = millis();
+  boolean StoptheLoop = false;
 
   int reading = digitalRead(buttonPin);
-  Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
+  StoptheLoop = Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
+  if (StoptheLoop == true){
+    return;
+  }
   
   /*old button function
   if (reading != lastButtonState){ //button state changed
@@ -102,8 +106,11 @@ void loop() {
       display.showNumberDec(t, true);
       while ((millis()-previousMills>0) && (millis()-previousMills<500)){
         int reading = digitalRead(buttonPin);
-        Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
-        };
+        StoptheLoop = Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
+        if (StoptheLoop == true){
+             return;
+        }
+     };
     
     unsigned long colon_t = millis();
     uint8_t segto;    //Display colon
@@ -111,7 +118,10 @@ void loop() {
     display.setSegments(&segto, 1, 1);  /** Display center colon*/ 
     while ((millis()-colon_t>0) && (millis()-colon_t<500)){
       int reading = digitalRead(buttonPin);
-      Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
+      StoptheLoop = Button_Push_Check (reading, buttonState, lastButtonState,lastDebounceTime,debounceDelay, TempChangeShow);
+      if (StoptheLoop == true){
+             return;
+        }
       };
   }
   else {
@@ -192,7 +202,8 @@ void loop() {
 }
 
 
-void Button_Push_Check (int& reading, int&buttonState, int& lastButtonState,long& lastDebounceTime,long& debounceDelay ,boolean& TempChangeShow){
+boolean Button_Push_Check (int& reading, int&buttonState, int& lastButtonState,long& lastDebounceTime,long& debounceDelay ,boolean& TempChangeShow){
+  boolean result = false;
   if (reading != lastButtonState){ //button state changed
     lastDebounceTime = millis(); //update last debounce time
   }
@@ -201,10 +212,12 @@ void Button_Push_Check (int& reading, int&buttonState, int& lastButtonState,long
     buttonState = reading; //update previous stable button state
     if (buttonState == LOW){ // button presses
       TempChangeShow =!TempChangeShow; //reverse the boolean
+      result = true;
     }
     }
   }
   lastButtonState = reading; //update last button state
+  return result;
 }
 
 
